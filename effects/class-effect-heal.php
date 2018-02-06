@@ -43,21 +43,13 @@ class Cge_Heal_Effect extends Cge_Effect {
 	public function do_effect( $target, $target_type, $amount, $gamedata ) {
 		
 		$actions = [];
-		
-		if ( 'self' === $target_type  ) {
 			
-			$amount = apply_filters( 'heal', $amount );
+		$amount = apply_filters( 'heal', $amount );
 
-			$gamedata['game_data']['player']['health'] += $amount;
-
-			$actions[] = [ 'target' => $target_type, 'action' => sprintf( 'restored %s life', $amount ) ];
-			
-		}
+		$gamedata = $this->restore_health( $target_type, $amount, $gamedata );
 		
-		if ( $gamedata['game_data']['player']['health'] > $gamedata['game_data']['player']['max_health'] ) {
-			$target[ 'health' ] = $target[ 'max_health' ];
-		}
-				
+		$actions[] = [ 'target' => $target_type, 'action' => sprintf( 'restored %s life', $amount ) ];
+						
 		return [
 			'action_log' => $actions,
 			'gamedata' => $gamedata

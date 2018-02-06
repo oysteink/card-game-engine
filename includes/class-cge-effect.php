@@ -28,4 +28,36 @@ class Cge_Effect {
 
 
 	}	
+	
+	// Helper function for reducing life on player og target
+	function reduce_health( $target, $amount, $gamedata ) {
+		
+	}
+	
+		// Helper function for reducing life on player og target
+	function restore_health( $target, $amount, $gamedata ) {
+
+		if ( 'self' === $target ) {
+
+			$gamedata['game_data']['player']['health'] += $amount;
+			
+			if ( $gamedata['game_data']['player']['health'] > $gamedata['game_data']['player']['max_health'] ) {
+				$gamedata['game_data']['player']['health'] = $gamedata['game_data']['player']['max_health'];
+			}
+
+		}
+				
+		return $gamedata;
+		
+	}
+	
+	function add_buff( $target, $buff, $gamedata ) {
+		
+	}
+
+	function remove_buff( $target, $buff, $gamedata ) {
+		
+	}
+
+	
 }

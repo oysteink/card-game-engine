@@ -199,10 +199,14 @@ class Cge_Admin {
 		    
 		} );
 		
+		
+		
 		// 3. Hide ACF field group menu item
 		// add_filter('acf/settings/show_admin', '__return_false');
 
 		include_once( plugin_dir_path( dirname( __FILE__ ) ) . 'admin/lib/acf/acf.php' );
+		
+		include_once( plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/cge-acf-layouts.php' );
 
 	}
 
