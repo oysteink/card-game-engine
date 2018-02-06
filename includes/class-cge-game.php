@@ -413,10 +413,10 @@ class Cge_Game {
 		if ( $class = $this->database->get_classes( $class_id ) ) {
 
 			// Set class
-			$this->gamedata['game_data']['player']['class'] = $class[0]->name;
+			$this->gamedata['game_data']['player']['class'] = $class[0]['name'];
 
 			// Get basic deck
-			$this->gamedata['game_data']['player']['deck']['cards'] = $this->database->get_basic_deck( $class[0]->slug );
+			$this->gamedata['game_data']['player']['deck']['cards'] = $this->database->get_basic_deck( $class['id'] );
 			$this->gamedata['game_data']['player']['deck']['count'] = count( $this->gamedata['game_data']['player']['deck']['cards'] );
 
 			// Copy deck to draw pile and shuffle
