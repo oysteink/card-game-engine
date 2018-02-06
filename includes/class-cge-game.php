@@ -138,19 +138,7 @@ class Cge_Game {
 		 
 		 $action = [
 			 'message' => 'Select class',
-			 'options' => [
-					 [
-						 'id' => 'wizard',
-						 'name' => 'Wizard',
-						 'description' => 'Description'
-						 ],
-					 [
-						 'id' => 'fighter',
-						 'name' => 'Fighter',
-						 'description' => 'Description'
-						 
-					 ]
-			 ]
+			 'options' => $this->database->get_classes()
 		 ];
 		 
 		 return [

@@ -34,10 +34,20 @@ class Cge_Database {
 		if ( $class ) {
 			$args['slug'] = $class;
 		}
+
+		if ( $classes = get_terms( $args ) ){
 		
-		$classes = get_terms( $args );
-		
-		return $classes;
+			$return_data = [];
+			
+			foreach ( $classes as $class ) {
+				$return_data[] = [ 'id' => $class->slug, 'name' => $class->name ];
+			}
+			
+			return $return_data;
+			
+		} else {
+			return false;
+		}
 
 	}
 
