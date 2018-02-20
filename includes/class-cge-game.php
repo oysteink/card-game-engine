@@ -55,17 +55,19 @@ class Cge_Game {
 
 		// Log actions for frontend animations
 		$this->action_log = []; 
+		
+		// Debug log is attached to the game object
 		$this->debug = [];
 
 		// Load effects		
-		$effect_loader = new Cge_Effects();
-		$this->effects = $effect_loader->effects;
-		
-		
+		$this->effect_handler = new Cge_Effects( $this );
+		$this->effects = $this->effect_handler->effects;
 
-		// Load effects that are active on the board
+		// Load effects from cards in play
 		$this->load_active_effects();
-
+		
+		// Load curses and buffs from enemies
+		// $this->load_active_curses();
 		
 	}
 	
@@ -194,23 +196,19 @@ class Cge_Game {
 		
 	}
 	
+	// Trigger effects for this action
 	function trigger_actions( $trigger ) {
-		
+				
 		if ( ! empty( $this->active_effects[ $trigger ] ) ) {
-			
+
 			foreach ( $this->active_effects[ $trigger ] as $effect ) {
 			
 				if ( isset( $this->effects[ $effect['effect'] ] ) )	{
 					
 					$effect_class_name = $this->effects[ $effect['effect'] ]['class'];
-					$effect_class = new $effect_class_name;
+					$effect_class = new $effect_class_name( $this );
 					
-					$response = $effect_class->do_effect( '', $effect['target'], $effect['effect_strength'], $this->gamedata );
-					
-					// If the effect returns gamedata, update
-					if ( ! empty( $response['gamedata'] ) ) {
-						$this->gamedata = $response['gamedata'];
-					}
+					$response = $effect_class->do_effect( [ 'type' => $effect['target'] ], $effect['effect_strength'] );
 					
 					if ( ! empty( $response['action_log'] ) ) {
 						$this->action_log = array_merge( $this->action_log, $response['action_log'] );
@@ -227,10 +225,12 @@ class Cge_Game {
 		
 	}
 	
+	// Increase turn counter
 	function next_turn() {
 		$this->gamedata['game_data']['turn']++;
 	}
 
+	// Play a card
 	function play_card( $card_number, $target = '' ) {
 		
 		if ( isset( $this->gamedata['current_state'] ) && 'player_turn' === $this->gamedata['current_state'] ) {
@@ -254,6 +254,10 @@ class Cge_Game {
 						
 						$this->play_permanent_card( $card );
 						
+					} elseif ( 'self' === $target || ( empty( $target ) && 'self' === $card['target'] ) ) {
+						
+						$this->play_card_on_target( $card, 'self' );
+						
 					} elseif( is_numeric( $target ) ) {
 												
 						$enemies = $this->gamedata['game_data']['enemy']['enemies'];
@@ -262,7 +266,7 @@ class Cge_Game {
 							
 							if ( (int)$target === (int)$creature['target'] ) {
 								
-								$this->play_card_on_creature( $card, $creature );
+								$this->play_card_on_target( $card, 'enemy', $creature );
 							
 							}
 						}
@@ -293,11 +297,8 @@ class Cge_Game {
 		
 	}
 	
-	function play_card_on_creature( $card, $creature ) {
-		
-		//print_r( $card );
-		//print_r( $creature );
-		//print_r( $this->effects );
+	// Play a card on a creature
+	function play_card_on_target( $card, $target_type, $enemy = false) {
 
 		$card_effects = $this->database->get_card_effects( $card['card_id'] );
 		
@@ -306,24 +307,18 @@ class Cge_Game {
 			if ( isset( $this->effects[ $effect['effect'] ] ) )	{
 				
 				$effect_class_name = $this->effects[ $effect['effect'] ]['class'];
-				$effect_class = new $effect_class_name;
+				$effect_class = new $effect_class_name( $this );
 				
-				$response = $effect_class->do_effect( $creature, 'creature', $effect['effect_strength'], $this->gamedata );
+				$target = [ 'type' => $target_type ];
 				
-				// If the effect returns gamedata, update
-				if ( ! empty( $response['gamedata'] ) ) {
-					$this->gamedata = $response['gamedata'];
+				// Is the target of this effect different from 
+				if ( 'default' !== $effect['target'] ) {
+					$target = [ 'type' => $effect['target'] ];			
+				} elseif ( $enemy ) {
+					$target['enemy'] = $enemy['target'];
 				}
 				
-				// If the effect returns gamedata, update
-				if ( ! empty( $response['target'] ) ) {
-
-					// The effect has updated the creature
-					$creature = $response['target'];
-					
-					$this->update_creature( $creature );
-					
-				}
+				$response = $effect_class->do_effect( $target, $effect['effect_strength'] );
 				
 				if ( ! empty( $response['action_log'] ) ) {
 					$this->action_log = array_merge( $this->action_log, $response['action_log'] );
@@ -334,39 +329,24 @@ class Cge_Game {
 		}
 	}
 
+	// Put a permanent card in play
 	function play_permanent_card( $card ) {
-		
-		//print_r( $card );
-		//print_r( $creature );
-		//print_r( $this->effects );
-
-		//$card_effects = $this->database->get_card_effects( $card['card_id'] );
 		
 		$this->gamedata['game_data']['player']['in_play'][] = $card;
 
 	}
-
 	
-	function update_creature( $updated_creature ) {
-		
-		$enemy_enemies = $this->gamedata['game_data']['enemy']['enemies'];
-		
-		foreach ( $enemy_enemies as $index => $creature ) {
-			if ( (int)$creature['target'] === (int)$updated_creature['target'] ) {
-				$this->gamedata['game_data']['enemy']['enemies'][ $index ] = $updated_creature;
-			}
-		}
-		
-	}
-	
+	// Enemy creatures attack
 	function enemy_attacks() {
 		
 		$enemy_enemies = $this->gamedata['game_data']['enemy']['enemies'];
 		
 		foreach ( $enemy_enemies as $index => $enemy ) {
 
-			$this->gamedata['game_data']['player']['health'] -= $enemy['attack'];
-			$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'amouht' => $enemy['attack'] ];
+			if ( ! $this->effect_handler->check_curse( $enemy, 'prevent_attack' ) ) {
+				$this->gamedata['game_data']['player']['health'] -= $enemy['attack'];
+				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'amouht' => $enemy['attack'] ];
+			}
 
 		}
 
@@ -378,11 +358,13 @@ class Cge_Game {
 		
 	}
 	
+	// End game (badly)
 	function game_over() {
 		$this->set_current_state( 'game_over', [] );
 		$this->gamedata['game_data']['status'] = 'finished';
 	}
 	
+	// End current turn, run enmy turn, initiate next turn
 	function end_turn() {
 		if ( isset( $this->gamedata['current_state'] ) && 'player_turn' === $this->gamedata['current_state'] ) {
 
@@ -407,6 +389,7 @@ class Cge_Game {
 		}
 	}
 	
+	// Select class and set up deck/hands
 	function select_class( $class_id ) {
 		
 		// Check for valid class
@@ -435,6 +418,7 @@ class Cge_Game {
 		}
 	}
 
+	// Draw x cards
 	function draw_cards( $amount ) {
 		
 		if ( $amount <= $this->gamedata['game_data']['player']['draw_pile']['count'] ) {
@@ -474,6 +458,7 @@ class Cge_Game {
 		$this->gamedata['action'] = $action;
 	}
 	
+	// Save the current gamestate to cache
 	function save_gamestate() {
 		
 		if ( $this->game_id ) {
@@ -483,6 +468,7 @@ class Cge_Game {
 		}
 	}
 	
+	// Load the current gamestate from cache
 	function load_gamestate( $game_id ) {
 		if ( $game_id ) {
 			$data =  get_transient( 'game_' . $game_id );
@@ -490,17 +476,5 @@ class Cge_Game {
 		} else {
 			return false;
 		}
-	}
-	
-	function get_starter_deck( $class ) {
-		
-		$args = [
-			'post_type' => 'cge-deck',
-			'cge-class' => $class
-		];
-		
-		$deck_post = get_posts( $args );
-		
-	}
-		
+	}		
 }

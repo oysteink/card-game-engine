@@ -186,9 +186,10 @@ acf_add_local_field_group(array(
 					'choices' => array(
 						'damage' => 'Damage (dmg amount)',
 						'heal' => 'Heal (heal amount)',
-						'stun' => 'Stun',
-						'damage_increase' => '+ Damage',
-						'poison' => 'Apply poison',
+						'weaken' => 'Weaken',
+						'stun' => 'Stun*',
+						'damage_increase' => '+ Damage*',
+						'poison' => 'Apply poison*',
 					),
 					'default_value' => array(
 					),

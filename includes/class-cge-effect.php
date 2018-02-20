@@ -24,40 +24,8 @@ class Cge_Effect {
 	 *
 	 * @since    1.0.0
 	 */
-	public function __construct() {
-
-
+	public function __construct( Cge_Game $game ) {
+		$this->game = $game;
 	}	
-	
-	// Helper function for reducing life on player og target
-	function reduce_health( $target, $amount, $gamedata ) {
-		
-	}
-	
-		// Helper function for reducing life on player og target
-	function restore_health( $target, $amount, $gamedata ) {
-
-		if ( 'self' === $target ) {
-
-			$gamedata['game_data']['player']['health'] += $amount;
-			
-			if ( $gamedata['game_data']['player']['health'] > $gamedata['game_data']['player']['max_health'] ) {
-				$gamedata['game_data']['player']['health'] = $gamedata['game_data']['player']['max_health'];
-			}
-
-		}
-				
-		return $gamedata;
-		
-	}
-	
-	function add_buff( $target, $buff, $gamedata ) {
-		
-	}
-
-	function remove_buff( $target, $buff, $gamedata ) {
-		
-	}
-
 	
 }

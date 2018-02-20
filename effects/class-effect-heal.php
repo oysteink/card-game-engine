@@ -29,30 +29,18 @@ add_filter( 'cge_effects', 'cge_init_heal_effect' );
  */
 class Cge_Heal_Effect extends Cge_Effect {
 	
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since    1.0.0
-	 */
-	public function __construct() {
-		
-		$this->id = 'heal';
-
-	}
-	
-	public function do_effect( $target, $target_type, $amount, $gamedata ) {
+	public function do_effect( $target, $amount ) {
 		
 		$actions = [];
 			
 		$amount = apply_filters( 'heal', $amount );
 
-		$gamedata = $this->restore_health( $target_type, $amount, $gamedata );
+		$this->game->effect_handler->restore_health( $target, $amount );
 		
-		$actions[] = [ 'target' => $target_type, 'action' => sprintf( 'restored %s life', $amount ) ];
+		$actions[] = [ 'target' => $target['type'], 'action' => sprintf( 'restored %s life', $amount ) ];
 						
 		return [
-			'action_log' => $actions,
-			'gamedata' => $gamedata
+			'action_log' => $actions
 		];
 		
 	}

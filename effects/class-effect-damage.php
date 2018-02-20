@@ -28,42 +28,19 @@ add_filter( 'cge_effects', 'cge_init_damage_effect' );
  * @author     oysteink <oysteink@gmail.com>
  */
 class Cge_Damage_Effect extends Cge_Effect {
-	
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since    1.0.0
-	 */
-	public function __construct() {
-		
-		$this->id = 'damage';
 
-	}
 	
-	public function do_effect( $target, $target_type, $amount, $gamedata ) {
+	public function do_effect( $target, $amount ) {
 		
 		$actions = [];
 		
-		if ( 'creature' === $target_type  ) {
-			
-			$amount = apply_filters( 'creature_damage', $amount );
-			
-			$target['health'] = $target['health'] - $amount;
-			
-			$actions[] = [ 'target' => $target['target'], 'action' => sprintf( '%s damage', $amount ) ];
-		}
+		$this->game->effect_handler->apply_damage( $target, $amount );
 		
-		if ( $target[ 'health' ] < 0 ) {
-			$target['health'] = 0;
-			$actions[] = [ 'target' => $target['target'], 'action' => 'died' ];
-		}
-				
+		$actions[] = [ 'target' => $target['type'], 'action' => 'damage', 'message' => sprintf( '%s damage', $amount ) ];
+			
 		return [
-			'target' => $target,
 			'action_log' => $actions
 		];
 	}
 	
 }
-
-
