@@ -133,7 +133,7 @@ class Cge_Effects {
 	
 	function check_curse( $target, $effect ) {
 		
-		if ( is_array( $target['curse'] ) ) {
+		if ( isset( $target['curse'] ) && is_array( $target['curse'] ) ) {
 			
 			foreach ( $target['curse'] as $curse ) {
 				if ( $curse[ $curse ] ) {
