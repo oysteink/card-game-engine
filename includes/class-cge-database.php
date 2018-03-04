@@ -103,5 +103,34 @@ class Cge_Database {
 	function get_card_effects( $card_id ) {
 		return get_post_meta( $card_id, 'cge-card-effects', true );
 	}
+	
+	/**
+	 * Fetch game settings.
+	 *
+	 * @since    1.0.0
+	 * @param    int               $card_id
+	 */
+	function get_game_settings() {
+
+		$settings = [
+			'starting_health' => 30,
+			'starting_mana' => 5,
+			'discard_on_end_turn' => true,
+			'starting_hand_count' => 5,
+			'reshuffle_when_draw_pile_empty' => true,
+			'draw_cards_count' => 5
+		];
+		
+		// Loop through options and override with custom value
+		foreach ( $settings as $option_name => $option_value ) {
+			if ( $option_value = get_option( 'options_cge_' . $option_name ) ) {
+				$settings[ $option_name ] = $option_value;
+			}
+		}
+		
+		// Return game settings
+		return $settings;
+		
+	}
 
 }

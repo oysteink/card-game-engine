@@ -41,7 +41,7 @@ class Cge_Game {
 		// Initiate database functions
 		$this->database = new Cge_Database();
 
-		$this->settings = [ 'starting_mana' => 5, 'starting_cards' => 4, 'starting_health' => 30 ];
+		// $this->settings = [ 'starting_mana' => 5, 'starting_cards' => 4, 'starting_health' => 30 ];
 
 		if ( $game_id ) {
 			// Get game state from id
@@ -91,10 +91,13 @@ class Cge_Game {
 	
 	function create_new_game( $id ) {
 		
+		$game_settings = $this->database->get_game_settings();
+		
 		$gamedata = [
 			'game_id' => $id,
 			'turn' => 0,
 			'status' => 'running',
+			'settings' => $game_settings,
 			'player' => [
 				'class' => '',
 				'deck' => [],
@@ -108,9 +111,9 @@ class Cge_Game {
 				'discard_pile' => [
 					'count' => 0
 				],
-				'health' => $this->settings['starting_health'],
-				'max_health' => $this->settings['starting_health'],
-				'mana' => $this->settings['starting_mana'],
+				'health' => $game_settings['starting_health'],
+				'max_health' => $game_settings['starting_health'],
+				'mana' => $game_settings['starting_mana'],
 				'target' => 'self',
 				'in_play' => [],
 				'equipped' => [],
@@ -374,9 +377,9 @@ class Cge_Game {
 			// Set state to player_turn, add action log
 			$this->set_current_state( 'player_turn', [] );
 			
-			$this->draw_cards( 1 );
+			$this->draw_cards( $this->get_setting( 'draw_cards_count' ) );
 			
-			$this->gamedata['game_data']['player']['mana'] = 5;
+			$this->gamedata['game_data']['player']['mana'] = $this->get_setting( 'starting_mana' );
 			
 			// Increase turn counter
 			$this->next_turn();
@@ -410,7 +413,7 @@ class Cge_Game {
 			$this->gamedata['game_data']['player']['draw_pile']['count'] = count( $draw_pile );
 
 			// Draw starting hand			
-			$this->draw_cards( 4 );
+			$this->draw_cards( $this->get_setting( 'starting_hand_count' ) );
 			
 			return true;
 		} else {
@@ -476,5 +479,14 @@ class Cge_Game {
 		} else {
 			return false;
 		}
-	}		
+	}
+	
+	// Get setting value
+	function get_setting( $setting_name ) {
+		if ( ! empty( $this->gamedata['game_data']['settings'][ $setting_name ] ) ) {
+			return $this->gamedata['game_data']['settings'][ $setting_name ];
+		} else {
+			return false;
+		}
+	}
 }
