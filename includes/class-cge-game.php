@@ -380,7 +380,16 @@ class Cge_Game {
 
 	// set up new level
 	function level_complete() {
-		$this->set_current_state( 'level_complete', [] );
+
+		$this->gamedata['game_data']['level']++;
+		
+		if ( $enemies = $this->database->get_level_enemies( $this->gamedata['game_data']['level'] ) ) {
+			$this->gamedata['game_data']['enemy']['enemies'] = $enemies;	
+		} else {
+			$this->set_current_state( 'victory', [] );
+			$this->gamedata['game_data']['status'] = 'finished';
+		}
+				
 	}
 	
 	// End current turn, run enmy turn, initiate next turn
