@@ -156,7 +156,7 @@ class Cge_Effects {
 		
 		foreach ( $enemies as $index => $enemy ) {
 			
-			if ( is_array( $enemy['curses'] ) ) {
+			if ( isset( $enemy['curses'] ) && is_array( $enemy['curses'] ) ) {
 				
 				foreach ( $enemy['curses'] as $curse_index => $curse ) {
 					if ( isset( $curse['expire'] ) && $curse['expire'] === $trigger ) {
