@@ -125,6 +125,7 @@ class Cge_Game {
 			'enemy' => [
 				'enemies' => [
 					[
+						'state' => 'alive',
 						'target' => 1,
 						'name' => 'Sand Worm',
 						'max_health' => 20,
@@ -132,12 +133,12 @@ class Cge_Game {
 						'attack' => 5
 					],
 					[
+						'state' => 'alive',
 						'target' => 2,
 						'name' => 'Sand Worm',
 						'health' => 20,
-						'max_health' => 20,
-						'attack' => 5,
-						'shield' => 2
+						'max_health' => 35,
+						'attack' => 3,
 					],					
 				]
 			]
@@ -284,6 +285,8 @@ class Cge_Game {
 					$this->gamedata['game_data']['player']['discard_pile']['cards'][] = $card;
 					$this->gamedata['game_data']['player']['discard_pile']['count']++;
 
+					$this->check_health_states();
+
 					return true;
 				}
 				$i++;
@@ -350,14 +353,28 @@ class Cge_Game {
 			}
 
 		}
+		
+	}
+
+	// check for dead enemies / heroes :-D	
+	function check_health_states() {
+		
+		foreach ( $this->gamedata['game_data']['enemy']['enemies'] as $index => $enemy ) {
+
+			if ( $enemy['health'] <= 0 ) {
+				$this->gamedata['game_data']['enemy']['enemies'][ $index ]['state'] = 'dead';
+			}
+
+		}
 
 		if ( $this->gamedata['game_data']['player']['health'] <= 0 ) {
 			$this->gamedata['game_data']['player']['health'] = 0;
 			$this->game_over();
 			return;
 		}
-		
+				
 	}
+	
 	
 	// End game (badly)
 	function game_over() {
@@ -384,10 +401,14 @@ class Cge_Game {
 			
 			$this->gamedata['game_data']['player']['mana'] = $this->get_setting( 'starting_mana' );
 			
+			$this->check_health_states();
+			
 			// Increase turn counter
 			$this->next_turn();
 			
 			$this->trigger_actions( 'on_start_turn' );
+
+			$this->check_health_states();
 			
 		} else {
 			return new WP_Error( 'wrong_gamestate', __( 'Can not end turn at this gamestate.', 'cge' ) );
