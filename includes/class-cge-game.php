@@ -107,9 +107,11 @@ class Cge_Game {
 				 ],
 				'draw_pile' => [
 					'count' => 0,
+					'cards' => []
 				],
 				'discard_pile' => [
-					'count' => 0
+					'count' => 0,
+					'cards' => []
 				],
 				'health' => $game_settings['starting_health'],
 				'max_health' => $game_settings['starting_health'],
@@ -224,8 +226,6 @@ class Cge_Game {
 			
 		}
 		
-		
-		
 	}
 	
 	// Increase turn counter
@@ -274,8 +274,6 @@ class Cge_Game {
 							}
 						}
 						
-					} elseif ( 'self' === $target )  {
-
 					}
 					
 					// Update hand
@@ -376,6 +374,11 @@ class Cge_Game {
 			
 			// Set state to player_turn, add action log
 			$this->set_current_state( 'player_turn', [] );
+
+			// Discard hand if game settings say so			
+			if ( $this->get_setting( 'discard_on_end_turn' ) ) {
+				$this->discard_hand();
+			}
 			
 			$this->draw_cards( $this->get_setting( 'draw_cards_count' ) );
 			
@@ -385,7 +388,6 @@ class Cge_Game {
 			$this->next_turn();
 			
 			$this->trigger_actions( 'on_start_turn' );
-
 			
 		} else {
 			return new WP_Error( 'wrong_gamestate', __( 'Can not end turn at this gamestate.', 'cge' ) );
@@ -424,11 +426,20 @@ class Cge_Game {
 	// Draw x cards
 	function draw_cards( $amount ) {
 		
-		if ( $amount <= $this->gamedata['game_data']['player']['draw_pile']['count'] ) {
+		$remaining = $amount;
+		
+		while ( $remaining > 0 ) {
 			
+			if ( $amount >= $this->gamedata['game_data']['player']['draw_pile']['count'] ) {
+				$remaining = $amount - $this->gamedata['game_data']['player']['draw_pile']['count'];
+				$amount = 	$this->gamedata['game_data']['player']['draw_pile']['count'];
+			} else {
+				$remaining = 0;
+			}
+
 			// Get new cards from draw pile
 			$new_cards = array_slice( $this->gamedata['game_data']['player']['draw_pile']['cards'], 0, $amount );
-
+	
 			// Remove drawn cards from draw pile
 			$new_draw_pile = array_slice( $this->gamedata['game_data']['player']['draw_pile']['cards'], $amount );
 			$this->gamedata['game_data']['player']['draw_pile']['cards'] = $new_draw_pile;
@@ -448,12 +459,39 @@ class Cge_Game {
 			$this->gamedata['game_data']['player']['hand']['cards'] = $hand;
 			$this->gamedata['game_data']['player']['hand']['count'] = count( $this->gamedata['game_data']['player']['hand']['cards'] );
 			
-			
-		} else {
-			// do something smart
+			if ( $remaining > 0 ) {
+				$this->shuffle_discard_pile();
+			}
+
 		}
+			
 	}
 
+	// Discard your whole hand
+	function discard_hand() {
+		
+		// Add hand to discard pile
+		$this->gamedata['game_data']['player']['discard_pile']['cards'] = array_merge( $this->gamedata['game_data']['player']['discard_pile']['cards'], $this->gamedata['game_data']['player']['hand']['cards'] );
+		$this->gamedata['game_data']['player']['discard_pile']['count'] = count( $this->gamedata['game_data']['player']['discard_pile']['cards'] );
+
+		$this->gamedata['game_data']['player']['hand']['cards'] = [];
+		$this->gamedata['game_data']['player']['hand']['count'] = 0;
+		
+	}
+
+	function shuffle_discard_pile() {
+		
+		$cards = $this->gamedata['game_data']['player']['discard_pile']['cards'];
+		
+		$this->gamedata['game_data']['player']['discard_pile']['cards'] = [];
+		$this->gamedata['game_data']['player']['discard_pile']['count'] = 0;
+
+		shuffle( $cards );
+				
+		$this->gamedata['game_data']['player']['draw_pile']['cards'] = $cards;
+		$this->gamedata['game_data']['player']['draw_pile']['count'] = count( $cards );
+		
+	}
 
 	// Change the current gamestate
 	function set_current_state( $state, $action = []  ) {
