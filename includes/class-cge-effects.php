@@ -131,13 +131,15 @@ class Cge_Effects {
 		
 	}
 	
+	// Check if target has specific curse
 	function check_curse( $target, $effect ) {
-		
-		if ( isset( $target['curse'] ) && is_array( $target['curse'] ) ) {
+				
+		if ( isset( $target['curses'] ) && is_array( $target['curses'] ) ) {
 			
-			foreach ( $target['curse'] as $curse ) {
-				if ( $curse[ $curse ] ) {
-					return $curse[ $effect ];
+			foreach ( $target['curses'] as $curse ) {
+								
+				if ( ! empty( $curse[ $effect ] ) ) {
+					return $curse;
 				}
 			}
 			
@@ -146,5 +148,25 @@ class Cge_Effects {
 		return false;
  		
 	}
+	
+	// Expire curses 
+	function expire_curses( $trigger ) {
+		
+		$enemies = $this->game->gamedata['game_data']['enemy']['enemies'];
+		
+		foreach ( $enemies as $index => $enemy ) {
+			
+			if ( is_array( $enemy['curses'] ) ) {
+				
+				foreach ( $enemy['curses'] as $curse_index => $curse ) {
+					if ( isset( $curse['expire'] ) && $curse['expire'] === $trigger ) {
+						unset( $this->game->gamedata['game_data']['enemy']['enemies'][ $index ]['curses'][$curse_index] );
+					}
+				}
+				
+			}
+		
+		}
+	}	
 	
 }

@@ -205,6 +205,9 @@ class Cge_Game {
 	// Trigger effects for this action
 	function trigger_actions( $trigger ) {
 				
+		// Expire curses
+		$this->effect_handler->expire_curses( $trigger );
+				
 		if ( ! empty( $this->active_effects[ $trigger ] ) ) {
 
 			foreach ( $this->active_effects[ $trigger ] as $effect ) {
@@ -223,10 +226,9 @@ class Cge_Game {
 				}
 	
 			}
-
 			
 		}
-		
+				
 	}
 	
 	// Increase turn counter
@@ -349,7 +351,7 @@ class Cge_Game {
 
 			if ( ! $this->effect_handler->check_curse( $enemy, 'prevent_attack' ) ) {
 				$this->gamedata['game_data']['player']['health'] -= $enemy['attack'];
-				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'amouht' => $enemy['attack'] ];
+				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'amount' => $enemy['attack'] ];
 			}
 
 		}
@@ -359,12 +361,21 @@ class Cge_Game {
 	// check for dead enemies / heroes :-D	
 	function check_health_states() {
 		
+		
+		$has_live_enemy = false;
+		
 		foreach ( $this->gamedata['game_data']['enemy']['enemies'] as $index => $enemy ) {
 
 			if ( $enemy['health'] <= 0 ) {
 				$this->gamedata['game_data']['enemy']['enemies'][ $index ]['state'] = 'dead';
-			}
+			} else {
+				$has_live_enemy = true;
+			}	
+		}
 
+		if ( ! $has_live_enemy ) {
+			$this->level_complete();
+			return;			
 		}
 
 		if ( $this->gamedata['game_data']['player']['health'] <= 0 ) {
@@ -380,6 +391,11 @@ class Cge_Game {
 	function game_over() {
 		$this->set_current_state( 'game_over', [] );
 		$this->gamedata['game_data']['status'] = 'finished';
+	}
+
+	// set up new level
+	function level_complete() {
+		$this->set_current_state( 'level_complete', [] );
 	}
 	
 	// End current turn, run enmy turn, initiate next turn
