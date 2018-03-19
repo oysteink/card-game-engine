@@ -349,7 +349,7 @@ class Cge_Game {
 		
 		foreach ( $enemy_enemies as $index => $enemy ) {
 
-			if ( ! $this->effect_handler->check_curse( $enemy, 'prevent_attack' ) ) {
+			if ( $enemy['state'] === 'alive' && ! $this->effect_handler->check_curse( $enemy, 'prevent_attack' ) ) {
 				$this->gamedata['game_data']['player']['health'] -= $enemy['attack'];
 				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'amount' => $enemy['attack'] ];
 			}
@@ -360,8 +360,7 @@ class Cge_Game {
 
 	// check for dead enemies / heroes :-D	
 	function check_health_states() {
-		
-		
+
 		$has_live_enemy = false;
 		
 		foreach ( $this->gamedata['game_data']['enemy']['enemies'] as $index => $enemy ) {
