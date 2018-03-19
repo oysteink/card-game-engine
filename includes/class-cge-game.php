@@ -93,8 +93,11 @@ class Cge_Game {
 		
 		$game_settings = $this->database->get_game_settings();
 		
+		$enemies = $this->database->get_level_enemies( 1 );
+		
 		$gamedata = [
 			'game_id' => $id,
+			'level' => 1,
 			'turn' => 0,
 			'status' => 'running',
 			'settings' => $game_settings,
@@ -123,24 +126,7 @@ class Cge_Game {
 				],
 			],
 			'enemy' => [
-				'enemies' => [
-					[
-						'state' => 'alive',
-						'target' => 1,
-						'name' => 'Sand Worm',
-						'max_health' => 20,
-						'health' => 20,
-						'attack' => 5
-					],
-					[
-						'state' => 'alive',
-						'target' => 2,
-						'name' => 'Sand Worm',
-						'health' => 20,
-						'max_health' => 35,
-						'attack' => 3,
-					],					
-				]
+				'enemies' => $enemies
 			]
 		 ];
 		 

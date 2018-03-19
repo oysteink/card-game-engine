@@ -116,7 +116,31 @@ class Cge_Admin {
 				update_post_meta( $post_id, 'cge-card-effects', $effects );
 
 			}
-			
+
+
+			// We will create a deck data object based on the acf repeater			
+			if ( 'cge-level' === $post->post_type ) {
+				
+				$level_data = [];
+				$creatures = get_field( 'creatures', $post_id );
+				
+				if ( is_array( $creatures ) ) {
+
+					foreach ( $creatures as $creature ) {
+						
+						$creature_post = $creature[ 'creature' ];
+
+						$level_data[] = [
+											'name' => $creature_post->post_title,
+											'attack' => $creature['attack'],
+											'health' => $creature['health']
+										]; 
+					}
+
+					update_post_meta( $post_id, 'cge-enemies', $level_data );
+				}
+				
+			}			
 		}
 
 	}

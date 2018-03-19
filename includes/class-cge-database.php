@@ -132,5 +132,48 @@ class Cge_Database {
 		return $settings;
 		
 	}
+	
+	// fetch a post based on level - load enemies
+	function get_level_enemies( $level ) {
+		
+		$args = [
+			'post_type' => 'cge-level',
+			'meta_key' => 'tier',
+			'meta_value' => $level,
+			'order' => 'rand'
+		];
+		
+		$posts = get_posts( $args );
+		
+		$level_enemies = [];
+		
+		if ( isset( $posts[0]->ID ) ) {
+			
+			$creatures = get_post_meta( $posts[0]->ID, 'cge-enemies', true );
+			
+			$target = 0;
+			
+			foreach ( $creatures as $creature ) {
+
+				$target++;
+
+				$level_enemies[] = [
+					'state' => 'alive',
+					'target' => $target,
+					'name' => $creature['name'],
+					'health' => $creature['health'],
+					'max_health' => $creature['health'],
+					'attack' => $creature['attack'],
+				];
+			
+			}
+			
+			return $level_enemies;
+			
+		} else {
+			return false;
+		}
+		
+	}
 
 }
