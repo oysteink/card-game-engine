@@ -168,11 +168,11 @@ acf_add_local_field_group(array(
 			'min' => 0,
 			'max' => 0,
 			'layout' => 'table',
-			'button_label' => 'Add effect',
+			'button_label' => 'Add effect/ability',
 			'sub_fields' => array(
 				array(
 					'key' => 'field_5a722e9cc0702',
-					'label' => 'Effect',
+					'label' => 'Effect/Ability',
 					'name' => 'effect',
 					'type' => 'select',
 					'instructions' => '',
@@ -184,6 +184,7 @@ acf_add_local_field_group(array(
 						'id' => '',
 					),
 					'choices' => array(
+						'ability-evade' => 'Ability: Evade (percent)',
 						'damage' => 'Damage (dmg amount)',
 						'heal' => 'Heal (heal amount)',
 						'weaken' => 'Weaken',
@@ -234,11 +235,12 @@ acf_add_local_field_group(array(
 					),
 					'choices' => array(
 						'instant' => 'Instant',
-						'permament' => 'Permanent *',
+						'permanent' => 'Permanent *',
 						'this_turn' => 'For the rest of the turn *',
 						'on_draw_card' => 'When card is drawn*',
 						'on_end_turn' => 'End of turn *',
 						'on_start_turn' => 'Start of turn*',
+						'on_enemy_attack' => 'On enemy attack',
 					),
 					'default_value' => array(
 					),

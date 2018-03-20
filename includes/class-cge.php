@@ -136,6 +136,11 @@ class Cge {
 		 * Effect loader class
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-cge-effects.php';
+
+		/**
+		 * Ability handler class
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-cge-abilities.php';
 				
 		/**
 		 * Set up Rest-API

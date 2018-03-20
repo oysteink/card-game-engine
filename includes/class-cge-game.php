@@ -63,12 +63,12 @@ class Cge_Game {
 		$this->effect_handler = new Cge_Effects( $this );
 		$this->effects = $this->effect_handler->effects;
 
-		// Load effects from cards in play
+		// Load abilities
+		$this->abilities = new Cge_Abilities( $this );
+		
+		// Load abilities and effects from cards in play
 		$this->load_active_effects();
-		
-		// Load curses and buffs from enemies
-		// $this->load_active_curses();
-		
+				
 	}
 	
 	function get_gamestate() {
@@ -121,6 +121,12 @@ class Cge_Game {
 				'mana' => $game_settings['starting_mana'],
 				'target' => 'self',
 				'in_play' => [],
+				'abilities' => [
+					'block' => 0,
+					'damage' => 0,
+					'evade' => 0,
+					'retaliation' => 0,
+				],
 				'equipped' => [],
 				'inventory' => [
 				],
@@ -169,7 +175,6 @@ class Cge_Game {
 		
 		$this->active_effects = [];
 		
-		
 		$in_play = $this->gamedata['game_data']['player']['in_play'];
 		
 		foreach ( $in_play as $card ) {
@@ -177,8 +182,15 @@ class Cge_Game {
 			$card_effects = $this->database->get_card_effects( $card['card_id'] );
 			
 			foreach ( $card_effects as $effect ) {
-								
-				$this->active_effects[ $effect['effect_trigger'] ][] = $effect;
+				
+				if ( $this->effect_handler->is_ability( $effect['name'] ) ) {
+					
+					$this->effect_handler->give_ability( $effect['name'] );
+					
+				} else {
+					
+					$this->active_effects[ $effect['effect_trigger'] ][] = $effect;
+				}
 				
 			}
 			
@@ -249,7 +261,7 @@ class Cge_Game {
 					} elseif ( 'self' === $target || ( empty( $target ) && 'self' === $card['target'] ) ) {
 						
 						$this->play_card_on_target( $card, 'self' );
-						
+												
 					} elseif( is_numeric( $target ) ) {
 												
 						$enemies = $this->gamedata['game_data']['enemy']['enemies'];
@@ -296,20 +308,25 @@ class Cge_Game {
 		
 		foreach ( $card_effects as $effect ) {
 			
-			if ( isset( $this->effects[ $effect['effect'] ] ) )	{
+			$target = [ 'type' => $target_type ];
+				
+			// Is the target of this effect different from 
+			if ( 'default' !== $effect['target'] ) {
+				$target = [ 'type' => $effect['target'] ];			
+			} elseif ( $enemy ) {
+				$target['enemy'] = $enemy['target'];
+			}
+			
+			// If this is an ability we give the ability
+			if ( $effect_name = $this->abilities->is_ability( $effect['effect'] ) ) {
+
+				$this->abilities->give_ability( $target, $effect_name, $effect['effect_strength'] );
+				
+			} elseif ( isset( $this->effects[ $effect['effect'] ] ) )	{
 				
 				$effect_class_name = $this->effects[ $effect['effect'] ]['class'];
 				$effect_class = new $effect_class_name( $this );
-				
-				$target = [ 'type' => $target_type ];
-				
-				// Is the target of this effect different from 
-				if ( 'default' !== $effect['target'] ) {
-					$target = [ 'type' => $effect['target'] ];			
-				} elseif ( $enemy ) {
-					$target['enemy'] = $enemy['target'];
-				}
-				
+								
 				$response = $effect_class->do_effect( $target, $effect['effect_strength'] );
 				
 				if ( ! empty( $response['action_log'] ) ) {
@@ -336,8 +353,16 @@ class Cge_Game {
 		foreach ( $enemy_enemies as $index => $enemy ) {
 
 			if ( $enemy['state'] === 'alive' && ! $this->effect_handler->check_curse( $enemy, 'prevent_attack' ) ) {
+				
+				// Check if attack is evaded
+				if ( $this->abilities->evade_attack( [ 'type' => 'self' ] ) ) {
+					$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'status' => 'evaded', 'amount' => false ];
+					continue;					
+				}
+				
 				$this->gamedata['game_data']['player']['health'] -= $enemy['attack'];
-				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'amount' => $enemy['attack'] ];
+				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'status' => 'success', 'amount' => $enemy['attack'] ];
+
 			}
 
 		}
