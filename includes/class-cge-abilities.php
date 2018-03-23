@@ -26,17 +26,23 @@ class Cge_Abilities {
 	 */
 	public function __construct( Cge_Game $game  ) {
 			
+		$abilities = [
+			'abl_evade' => [ 'name' => 'Evade', 'type' => 'percent', 'stack' => true ]
+		];
+		
+		$this->abilities = 	$abilities;
 		$this->game = $game;
 
 	}
 		
 	// Check if this card effect is an ability and return ability name
 	function is_ability( $ability_name ) {
-		if ( strstr( $ability_name, 'ability' ) ) {
-			return str_replace( 'ability-', '', $ability_name );
-		} else {
-			return false;
+
+		if ( isset( $this->abilities[ $ability_name ] ) ) {
+			return true;
 		}
+		
+		return false;
 	}
 	
 	// Give 
@@ -71,7 +77,7 @@ class Cge_Abilities {
 	// Check if attack is evaded
 	function evade_attack( $target ) {
 
-		if ( $evade_chance = $this->get_ability( $target, 'evade' ) ) {
+		if ( $evade_chance = $this->get_ability( $target, 'abl_evade' ) ) {
 			
 			$hit = rand( 0, 100 );
 			

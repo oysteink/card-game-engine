@@ -148,6 +148,18 @@ class Cge_Game {
 		 ];
 	}
 	
+	function log_action( $action_name, $target, $status, $message, $amount = '' ) {
+		
+		$action = [ [
+			'action' => $action_name,
+			'target' => $target,
+			'message' => $message,
+			'amount' => $amount
+		] ];
+		
+		$this->action_log = array_merge( $this->action_log, $action );
+		
+	}
 	
 	function player_response( $response ) {
 		
@@ -183,9 +195,9 @@ class Cge_Game {
 			
 			foreach ( $card_effects as $effect ) {
 				
-				if ( $this->effect_handler->is_ability( $effect['name'] ) ) {
+				if ( $this->abilities->is_ability( $effect['name'] ) ) {
 					
-					$this->effect_handler->give_ability( $effect['name'] );
+					// $this->effect_handler->give_ability( $effect['name'] );
 					
 				} else {
 					
@@ -201,11 +213,15 @@ class Cge_Game {
 	}
 	
 	// Trigger effects for this action
-	function trigger_actions( $trigger ) {
+	function trigger_actions( $trigger, $target = false ) {
 				
+		// Trigger curses
+		$this->effect_handler->trigger_curses( $trigger, $target );
+
 		// Expire curses
 		$this->effect_handler->expire_curses( $trigger );
-				
+		
+		// Trigger effects from cards in play
 		if ( ! empty( $this->active_effects[ $trigger ] ) ) {
 
 			foreach ( $this->active_effects[ $trigger ] as $effect ) {
@@ -216,11 +232,6 @@ class Cge_Game {
 					$effect_class = new $effect_class_name( $this );
 					
 					$response = $effect_class->do_effect( [ 'type' => $effect['target'] ], $effect['effect_strength'] );
-					
-					if ( ! empty( $response['action_log'] ) ) {
-						$this->action_log = array_merge( $this->action_log, $response['action_log'] );
-					}
-						
 				}
 	
 			}
@@ -258,7 +269,9 @@ class Cge_Game {
 						
 						$this->play_permanent_card( $card );
 						
-					} elseif ( 'self' === $target || ( empty( $target ) && 'self' === $card['target'] ) ) {
+					}
+						
+					if ( 'self' === $target || ( empty( $target ) && 'self' === $card['target'] ) ) {
 						
 						$this->play_card_on_target( $card, 'self' );
 												
@@ -318,9 +331,9 @@ class Cge_Game {
 			}
 			
 			// If this is an ability we give the ability
-			if ( $effect_name = $this->abilities->is_ability( $effect['effect'] ) ) {
+			if ( $this->abilities->is_ability( $effect['effect'] ) ) {
 
-				$this->abilities->give_ability( $target, $effect_name, $effect['effect_strength'] );
+				$this->abilities->give_ability( $target, $effect['effect'], $effect['effect_strength'] );
 				
 			} elseif ( isset( $this->effects[ $effect['effect'] ] ) )	{
 				
@@ -328,10 +341,6 @@ class Cge_Game {
 				$effect_class = new $effect_class_name( $this );
 								
 				$response = $effect_class->do_effect( $target, $effect['effect_strength'] );
-				
-				if ( ! empty( $response['action_log'] ) ) {
-					$this->action_log = array_merge( $this->action_log, $response['action_log'] );
-				}
 
 			}
 
@@ -356,12 +365,15 @@ class Cge_Game {
 				
 				// Check if attack is evaded
 				if ( $this->abilities->evade_attack( [ 'type' => 'self' ] ) ) {
-					$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'status' => 'evaded', 'amount' => false ];
+					$this->log_action( 'enemy_attacks', $enemy['target'], 'evaded', sprintf( 'Attack by %s is evaded.', $enemy['name'] ) );
 					continue;					
 				}
 				
+				$this->effect_handler->trigger_curses( 'enemy_attack', [ 'type' => 'enemy', 'target' => $enemy['target'] ] );
+				
 				$this->gamedata['game_data']['player']['health'] -= $enemy['attack'];
-				$this->action_log[] = [ 'action' => 'enemy_attacks', 'enemy' => $enemy['target'], 'status' => 'success', 'amount' => $enemy['attack'] ];
+
+				$this->log_action( 'enemy_attacks', $enemy['target'], 'success', sprintf( '%s attacks for %s damage', $enemy['name'], $enemy['attack'] ) );
 
 			}
 

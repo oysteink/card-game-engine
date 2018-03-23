@@ -38,6 +38,7 @@ class Cge_Effects {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'effects/class-effect-heal.php';
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'effects/class-effect-weaken.php';
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'effects/class-effect-stun.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'effects/class-effect-bleed.php';
 				
 		$this->effects = [];
 		$this->effects = apply_filters( 'cge_effects', $this->effects );
@@ -71,7 +72,7 @@ class Cge_Effects {
 		if ( 'enemy' === $target['type'] ) {
 			
 			foreach ( $this->game->gamedata['game_data']['enemy']['enemies'] as $index => $enemy ) {
-				
+
 				// LOL
 				if ( $enemy['target'] == $target['enemy'] ) {
 					$this->game->gamedata['game_data']['enemy']['enemies'][$index]['health'] -= $amount;
@@ -168,5 +169,40 @@ class Cge_Effects {
 		
 		}
 	}	
+
+	// Trigger curses 
+	function trigger_curses( $trigger, $target = false ) {
+		
+		$enemies = $this->game->gamedata['game_data']['enemy']['enemies'];
+		
+		foreach ( $enemies as $index => $enemy ) {
+			
+			// Skip if this is not the target
+			if ( isset( $target ) && $target['target'] !== $enemy['target'] ) {
+				continue;
+			}
+			
+			if ( isset( $enemy['curses'] ) && is_array( $enemy['curses'] ) ) {
+				
+				foreach ( $enemy['curses'] as $curse_index => $curse ) {
+					if ( isset( $curse['trigger'] ) && $curse['trigger'] === $trigger ) {
+						
+						// Here we will trigger smth
+						if ( isset( $this->game->effects[ $curse['effect'] ] ) )	{
+														
+							$effect_class_name = $this->game->effects[ $curse['effect'] ]['class'];
+							$effect_class = new $effect_class_name( $this->game );
+							
+							$effect_class->trigger_curse( [ 'type' => 'enemy', 'enemy' => $enemy['target'], 'target_name' => $enemy['name'] ], $curse['amount'] );
+								
+						}
+
+					}
+				}
+				
+			}
+		
+		}
+	}
 	
 }
