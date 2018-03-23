@@ -56,7 +56,7 @@ class Cge_Bleed_Effect extends Cge_Effect {
 				
 		$this->game->effect_handler->apply_damage( $target, $amount );
 		
-		$this->game->log_action( 'bleed', $target['target'], 'success', sprintf( '%s lose %s health to bleed', $target['target_name'], $amount ), $amount );
+		$this->game->log_action( 'bleed', $target['enemy'], 'success', sprintf( '%s lose %s health to bleed', $target['target_name'], $amount ), $amount );
 
 		return true;		
 	}
